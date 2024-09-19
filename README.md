@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FFmpeg Visualizer
 
-## Getting Started
+FFmpeg Visualizer is a Next.js 14 tool that lets users upload local videos and quickly add basic FFmpeg options with dropdowns and a timeline editor. This project is just meant to generate an FFmpeg command for use on a local machine; it does not use `ffmpeg.wasm`
 
-First, run the development server:
+Why? Because I would frequently forget the commands for FFmpeg, and therefore, this project was born.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Current Options
+
+Video Settings
+
+    Video Codec
+    Video Bitrate
+    Video Preset
+    Video Profile
+    Video Level
+    Video Pixel Format
+
+Audio Settings
+
+    Audio Codec
+    Audio Bitrate
+    Audio Channels
+    Audio Sample Rate
+
+## Config
+
+If you wish to modify what type of options are included (for example, adding a codec to Video Codec option) you must modify `lib/config.ts`! For example:
+
+```typescript
+export const videoCodecOptions = [
+  { value: "copy", label: "Copy (No re-encode)" },
+  { value: "libx264", label: "H.264 (libx264)" },
+  { value: "libx265", label: "H.265 (libx265)" },
+  { value: "libvpx-vp9", label: "VP9 (libvpx-vp9)" },
+  { value: "libaom-av1", label: "AV1 (libaom-av1)" },
+  { value: "prores", label: "ProRes (prores)" }, // New codec added here
+];
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Additional settings like defaults, options order, etc. are also found in `lib/config.ts`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Notes/License
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Feel free to open a PR/an issue for a feature/additional options.
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT License:
