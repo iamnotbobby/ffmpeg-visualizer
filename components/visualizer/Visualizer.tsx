@@ -35,7 +35,7 @@ export default function Visualizer() {
         }
       };
     }
-  }, [state.videoSrc]);
+  }, [state.videoSrc, updateState]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -49,7 +49,7 @@ export default function Visualizer() {
       video.addEventListener("timeupdate", updateTime);
       return () => video.removeEventListener("timeupdate", updateTime);
     }
-  }, [state.startTime, state.endTime, state.restartAtTrimStart]);
+  }, [state.startTime, state.endTime, state.restartAtTrimStart, updateState]);
 
   const jumpToStart = () => {
     if (videoRef.current) {
