@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/9b83df87-c895-4c05-bd4f-3c15fc81925e" alt="Visual"/>
+</p>
+
 # FFmpeg Visualizer
 
 FFmpeg Visualizer is a Next.js 14 tool that lets users upload local videos and quickly add basic FFmpeg options with dropdowns and a timeline editor. This project is just meant to generate an FFmpeg command for use on a local machine; it does not use `ffmpeg.wasm`
