@@ -43,4 +43,4 @@ Additional settings like defaults, options order, etc. are also found in `lib/co
 
 Feel free to open a PR/an issue for a feature/additional options.
 
-MIT License:
+MIT License: https://raw.githubusercontent.com/returnkirbo/ffmpeg-visualizer/master/LICENSE
