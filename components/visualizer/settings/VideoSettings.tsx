@@ -18,12 +18,14 @@ import {
 interface VideoSettingsProps {
   videoCodec: string;
   videoBitrate: string;
+  videoFps: string;
   videoPreset: string;
   videoProfile: string;
   videoLevel: string;
   pixelFormat: string;
   onVideoCodecChange: (value: string) => void;
   onVideoBitrateChange: (value: string) => void;
+  onVideoFpsChange: (value: string) => void;
   onVideoPresetChange: (value: string) => void;
   onVideoProfileChange: (value: string) => void;
   onVideoLevelChange: (value: string) => void;
@@ -33,12 +35,14 @@ interface VideoSettingsProps {
 export function VideoSettings({
   videoCodec,
   videoBitrate,
+  videoFps,
   videoPreset,
   videoProfile,
   videoLevel,
   pixelFormat,
   onVideoCodecChange,
   onVideoBitrateChange,
+  onVideoFpsChange,
   onVideoPresetChange,
   onVideoProfileChange,
   onVideoLevelChange,
@@ -70,6 +74,16 @@ export function VideoSettings({
             value={videoBitrate}
             onChange={(e) => onVideoBitrateChange(e.target.value)}
             placeholder="e.g., 1M"
+            disabled={videoCodec === "copy"}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="video-fps">FPS (Frames Per Second)</Label>
+          <Input
+            id="video-fps"
+            value={videoFps}
+            onChange={(e) => onVideoFpsChange(e.target.value)}
+            placeholder="e.g., 30"
             disabled={videoCodec === "copy"}
           />
         </div>

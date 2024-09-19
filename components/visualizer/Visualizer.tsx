@@ -106,11 +106,15 @@ export default function Visualizer() {
             <GeneralSettings
               muteAudio={state.muteAudio}
               restartAtTrimStart={state.restartAtTrimStart}
+              outputFileName={state.outputFileName}
               onMuteAudioChange={(checked) =>
                 updateState({ muteAudio: checked })
               }
               onRestartAtTrimStartChange={(checked) =>
                 updateState({ restartAtTrimStart: checked })
+              }
+              onOutputFileNameChange={(fileName) =>
+                updateState({ outputFileName: fileName })
               }
             />
 
@@ -131,6 +135,7 @@ export default function Visualizer() {
               videoPreset={state.videoPreset}
               videoProfile={state.videoProfile}
               videoLevel={state.videoLevel}
+              videoFps={state.videoFps}
               pixelFormat={state.pixelFormat}
               onVideoCodecChange={(value) => updateState({ videoCodec: value })}
               onVideoBitrateChange={(value) =>
@@ -143,6 +148,7 @@ export default function Visualizer() {
                 updateState({ videoProfile: value })
               }
               onVideoLevelChange={(value) => updateState({ videoLevel: value })}
+              onVideoFpsChange={(value) => updateState({ videoFps: value })}
               onPixelFormatChange={(value) =>
                 updateState({ pixelFormat: value })
               }

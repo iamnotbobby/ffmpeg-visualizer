@@ -80,11 +80,13 @@ export interface VideoTrimmerState {
   videoPreset: string;
   videoProfile: string;
   videoLevel: string;
+  videoFps: string;
   pixelFormat: string;
   audioChannels: string;
   audioSampleRate: string;
   restartAtTrimStart: boolean;
   ffmpegCommand: string;
+  outputFileName: string;
 }
 
 export const useVideoTrimmer = () => {
@@ -104,11 +106,13 @@ export const useVideoTrimmer = () => {
     videoPreset: "medium",
     videoProfile: "main",
     videoLevel: "4.0",
+    videoFps: "",
     pixelFormat: "yuv420p",
     audioChannels: "2",
     audioSampleRate: "44100",
     restartAtTrimStart: true,
     ffmpegCommand: "",
+    outputFileName: "output.mp4",
   });
 
   const updateState = useCallback((newState: Partial<VideoTrimmerState>) => {
@@ -121,33 +125,59 @@ export const useVideoTrimmer = () => {
     return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   }, []);
 
-  useEffect(() => {
-    if (state.videoSrc) {
-      let command = `ffmpeg -i "${state.fileName}" -ss ${formatTime(state.startTime)} -to ${formatTime(state.endTime)}`;
+  const generateFFmpegCommand = useCallback(() => {
+    if (!state.videoSrc) return "";
 
-      if (state.muteAudio) {
-        command += " -an";
-      } else {
-        command += ` -c:a ${state.audioCodec}`;
-        if (state.audioCodec !== "copy") {
-          command += ` -b:a ${state.audioBitrate} -ac ${state.audioChannels} -ar ${state.audioSampleRate}`;
-        }
-      }
+    const parts = ["ffmpeg"];
 
-      command += ` -c:v ${state.videoCodec}`;
-      if (state.videoCodec !== "copy") {
-        command += ` -b:v ${state.videoBitrate} -preset ${state.videoPreset} -profile:v ${state.videoProfile} -level ${state.videoLevel} -pix_fmt ${state.pixelFormat}`;
-      }
-
-      command += " output.mp4";
-
-      updateState({ ffmpegCommand: command });
+    // Input file and trimming
+    if (state.startTime > 0) {
+      parts.push(`-ss ${formatTime(state.startTime)}`);
     }
+    parts.push(`-i "${state.fileName}"`);
+    if (state.endTime < state.duration) {
+      parts.push(`-to ${formatTime(state.endTime)}`);
+    }
+
+    // Audio settings
+    if (state.muteAudio) {
+      parts.push("-an");
+    } else {
+      parts.push(`-c:a ${state.audioCodec}`);
+      if (state.audioCodec !== "copy") {
+        parts.push(
+          `-b:a ${state.audioBitrate}`,
+          `-ac ${state.audioChannels}`,
+          `-ar ${state.audioSampleRate}`,
+        );
+      }
+    }
+
+    // Video settings
+    parts.push(`-c:v ${state.videoCodec}`);
+    if (state.videoCodec !== "copy") {
+      parts.push(
+        `-b:v ${state.videoBitrate}`,
+        `-preset ${state.videoPreset}`,
+        `-profile:v ${state.videoProfile}`,
+        `-level ${state.videoLevel}`,
+        `-pix_fmt ${state.pixelFormat}`,
+      );
+      if (state.videoFps) {
+        parts.push(`-r ${state.videoFps}`);
+      }
+    }
+
+    // Output file
+    parts.push(`"${state.outputFileName}"`);
+
+    return parts.join(" ");
   }, [
     state.videoSrc,
     state.fileName,
     state.startTime,
     state.endTime,
+    state.duration,
     state.muteAudio,
     state.audioCodec,
     state.audioBitrate,
@@ -159,9 +189,17 @@ export const useVideoTrimmer = () => {
     state.videoProfile,
     state.videoLevel,
     state.pixelFormat,
+    state.videoFps,
+    state.outputFileName,
     formatTime,
-    updateState,
   ]);
+
+  useEffect(() => {
+    const newCommand = generateFFmpegCommand();
+    if (newCommand !== state.ffmpegCommand) {
+      updateState({ ffmpegCommand: newCommand });
+    }
+  }, [generateFFmpegCommand, state.ffmpegCommand, updateState]);
 
   return {
     state,
