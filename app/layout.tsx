@@ -1,25 +1,25 @@
-import "@/app/globals.css";
-import { Inter } from "next/font/google";
-import { Toaster } from "@/components/ui/toaster";
+import '@/app/globals.css'
+import { Inter } from 'next/font/google'
+import { Toaster } from '@/components/ui/toaster'
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: "FFmpeg Visualizer",
-  description: "A tool for visualizing FFmpeg CLI options",
-};
+    title: 'FFmpeg Visualizer',
+    description: 'A tool for visualizing FFmpeg CLI options',
+}
 
 export default function RootLayout({
-  children,
+    children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode
 }) {
-  return (
-    <html lang="en">
-      <body className={inter.className}>
-        {children}
-        <Toaster />
-      </body>
-    </html>
-  );
+    return (
+        <html lang="en">
+            <body className={inter.className}>
+                {children}
+                <Toaster />
+            </body>
+        </html>
+    )
 }

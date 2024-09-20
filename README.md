@@ -10,38 +10,40 @@ Why? Because I would frequently forget the commands for FFmpeg, and therefore, t
 
 ## Current Options
 
-Video Settings
+Video Settings: Trimming (HH:MM:SS.ss), Codec, Bitrate, Preset, Profile, Level, Pixel Format
 
-    Video Codec
-    Video Bitrate
-    Video Preset
-    Video Profile
-    Video Level
-    Video Pixel Format
+Audio Settings: Mute, Codec, Bitrate, Channels, Sample Rate
 
-Audio Settings
+In addition, there are other features like configuration saving, visualization for trimming, and more.
 
-    Audio Codec
-    Audio Bitrate
-    Audio Channels
-    Audio Sample Rate
+## Modifying the Configuration
 
-## Config
+To modify the configuration of the FFmpeg Visualizer, you will primarily work with the following files:
 
-If you wish to modify what type of options are included (for example, adding a codec to Video Codec option) you must modify `lib/config.ts`! For example:
+1. **Settings Options**: Located in `lib/constants.ts`, this file contains the available options for audio and video settings.
+
+2. **State Management**: The state management for the application is handled in `lib/useVisualizer.ts`. This file manages the application's state, including the current settings.
+
+### Adding New Options
+
+To add new options/settings, follow these steps:
+
+1. **Define New Options (`lib/constants.ts`)**:
+    - Add your new options to the existing arrays. For example, if you want to add a new audio codec, you can modify the `OPTIONS.AUDIO_CODEC` array:
 
 ```typescript
-export const videoCodecOptions = [
-  { value: "copy", label: "Copy (No re-encode)" },
-  { value: "libx264", label: "H.264 (libx264)" },
-  { value: "libx265", label: "H.265 (libx265)" },
-  { value: "libvpx-vp9", label: "VP9 (libvpx-vp9)" },
-  { value: "libaom-av1", label: "AV1 (libaom-av1)" },
-  { value: "prores", label: "ProRes (prores)" }, // New codec added here
-];
+export const OPTIONS = {
+    AUDIO_CODEC: [
+        { value: 'aac', label: 'AAC' },
+        { value: 'mp3', label: 'MP3' },
+        { value: 'wav', label: 'WAV' },
+        { value: 'new_codec', label: 'New Codec' }, // Add your new codec here
+    ],
+}
 ```
 
-Additional settings like defaults, options order, etc. are also found in `lib/config.ts`.
+2. **Update State Management (`lib/useVisualizer.ts`)**:
+    - Ensure that the new options are accounted for in the state management logic. For example, if you added a new audio codec, you might want to add logic to handle its selection and any related settings. The same goes for adding any new option.
 
 ## Notes/License
 
