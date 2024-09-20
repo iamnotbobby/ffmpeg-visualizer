@@ -10,7 +10,7 @@ import { AudioSettings } from './settings/AudioSettings'
 import { FFmpegCommand } from './FFmpegCommand'
 import { Footer } from './Footer'
 import { TrimmerControls } from './controls/TrimmerControls'
-import { useVisualizer } from '@/lib/useVisualizer'
+import { useVisualizer } from '@/hooks/useVisualizer'
 import { NavigationControls } from './controls/NavigationControls'
 
 export default function Visualizer() {
@@ -20,6 +20,8 @@ export default function Visualizer() {
         ffmpegCommand,
         clearSettings,
         updateFFmpegCommand,
+        resetFFmpegCommand,
+        isManuallyEdited,
     } = useVisualizer()
     const videoRef = useRef<HTMLVideoElement>(null)
     const { toast } = useToast()
@@ -233,6 +235,8 @@ export default function Visualizer() {
                         ffmpegCommand={ffmpegCommand}
                         onFFmpegCommandChange={updateFFmpegCommand}
                         onCopyCommand={handleCopyCommand}
+                        onResetCommand={resetFFmpegCommand}
+                        isManuallyEdited={isManuallyEdited}
                     />
                 </>
             )}

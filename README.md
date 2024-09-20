@@ -22,7 +22,7 @@ To modify the configuration of the FFmpeg Visualizer, you will primarily work wi
 
 1. **Settings Options**: Located in `lib/constants.ts`, this file contains the available options for audio and video settings.
 
-2. **State Management**: The state management for the application is handled in `lib/useVisualizer.ts`. This file manages the application's state, including the current settings.
+2. **State Management**: The state management for the application is handled in `hooks/useVisualizer.ts`. This file manages the application's state, including the current settings.
 
 ### Adding New Options
 
@@ -42,7 +42,7 @@ export const OPTIONS = {
 }
 ```
 
-2. **Update State Management (`lib/useVisualizer.ts`)**:
+2. **Update State Management (`hooks/useVisualizer.ts`)**:
     - Ensure that the new options are accounted for in the state management logic. For example, if you added a new audio codec, you might want to add logic to handle its selection and any related settings. The same goes for adding any new option.
 
 ## Notes/License

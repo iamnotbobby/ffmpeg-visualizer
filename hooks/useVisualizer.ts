@@ -1,7 +1,7 @@
+import { STORAGE_KEY } from '@/lib/constants'
+import { VisualizerState, SavedSettings } from '@/lib/types'
+import { formatTimeFlexible } from '@/lib/utils'
 import { useState, useCallback, useMemo, useEffect } from 'react'
-import { SavedSettings, VisualizerState } from './types'
-import { STORAGE_KEY } from './constants'
-import { formatTimeFlexible } from './utils'
 
 const initialState: VisualizerState = {
     videoSrc: null,
@@ -40,6 +40,11 @@ export const useVisualizer = () => {
         return initialState
     })
 
+    const [manualFFmpegCommand, setManualFFmpegCommand] = useState<
+        string | null
+    >(null)
+    const [isManuallyEdited, setIsManuallyEdited] = useState(false)
+
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const settingsToSave: SavedSettings = {
@@ -76,12 +81,20 @@ export const useVisualizer = () => {
             endTime: prevState.endTime,
             isPlaying: prevState.isPlaying,
         }))
+        setManualFFmpegCommand(null)
+        setIsManuallyEdited(false)
     }, [])
 
-    const updateState = useCallback((newState: Partial<VisualizerState>) => {
-        setState((prevState) => ({ ...prevState, ...newState }))
-        setManualFFmpegCommand(null)
-    }, [])
+    const updateState = useCallback(
+        (newState: Partial<VisualizerState>) => {
+            setState((prevState) => ({ ...prevState, ...newState }))
+            // Only reset if not manually edited
+            if (!isManuallyEdited) {
+                setManualFFmpegCommand(null)
+            }
+        },
+        [isManuallyEdited],
+    )
 
     const isTranscodingNeeded = useCallback((codec: string) => {
         return codec !== 'copy' && codec !== 'default'
@@ -90,10 +103,6 @@ export const useVisualizer = () => {
     const getCodecCommand = useCallback((prefix: string, codec: string) => {
         return codec !== 'default' ? `${prefix} ${codec}` : ''
     }, [])
-
-    const [manualFFmpegCommand, setManualFFmpegCommand] = useState<
-        string | null
-    >(null)
 
     const generateFFmpegCommand = useCallback(() => {
         if (!state.videoSrc) return ''
@@ -147,14 +156,20 @@ export const useVisualizer = () => {
     }, [state, isTranscodingNeeded, getCodecCommand])
 
     const ffmpegCommand = useMemo(() => {
-        if (manualFFmpegCommand !== null) {
+        if (isManuallyEdited && manualFFmpegCommand !== null) {
             return manualFFmpegCommand
         }
         return generateFFmpegCommand()
-    }, [manualFFmpegCommand, generateFFmpegCommand])
+    }, [isManuallyEdited, manualFFmpegCommand, generateFFmpegCommand])
 
     const updateFFmpegCommand = useCallback((newCommand: string) => {
         setManualFFmpegCommand(newCommand)
+        setIsManuallyEdited(true)
+    }, [])
+
+    const resetFFmpegCommand = useCallback(() => {
+        setManualFFmpegCommand(null)
+        setIsManuallyEdited(false)
     }, [])
 
     return {
@@ -163,5 +178,7 @@ export const useVisualizer = () => {
         ffmpegCommand,
         clearSettings,
         updateFFmpegCommand,
+        resetFFmpegCommand,
+        isManuallyEdited,
     }
 }
