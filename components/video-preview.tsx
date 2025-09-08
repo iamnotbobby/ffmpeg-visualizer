@@ -41,9 +41,6 @@ export function VideoPreview({
                     <h2 className="text-3xl font-bold text-gray-900 mb-2">
                         Video Processing Preview
                     </h2>
-                    <p className="text-gray-600">
-                        Compare original and processed videos side by side
-                    </p>
                 </div>
                 {processedVideo && (
                     <div className="text-right">
