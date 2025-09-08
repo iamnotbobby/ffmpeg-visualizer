@@ -1,10 +1,12 @@
-import { STORAGE_KEY } from '@/lib/constants'
+'use client'
+
+import { useState, useCallback, useEffect } from 'react'
 import { VisualizerState, SavedSettings } from '@/lib/types'
-import { formatTimeFlexible } from '@/lib/utils'
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { STORAGE_KEY } from '@/lib/constants'
 
 const initialState: VisualizerState = {
     videoSrc: null,
+    videoFile: null,
     fileName: '',
     duration: 0,
     currentTime: 0,
@@ -12,40 +14,40 @@ const initialState: VisualizerState = {
     endTime: 0,
     isPlaying: false,
     muteAudio: false,
-    videoCodec: 'default',
-    audioCodec: 'default',
-    videoBitrate: '1M',
-    audioBitrate: '128k',
+    videoCodec: 'copy',
+    audioCodec: 'copy',
+    videoBitrate: '',
+    audioBitrate: '',
     videoPreset: 'medium',
-    videoProfile: 'main',
-    videoLevel: '4.0',
+    videoProfile: 'high',
+    videoLevel: '4.1',
     videoFps: '',
     pixelFormat: 'yuv420p',
     audioChannels: '2',
-    audioSampleRate: '44100',
+    audioSampleRate: '48000',
     restartAtTrimStart: true,
-    outputFileName: 'output.mp4',
+    outputFileName: '',
     ffmpegCommand: '',
 }
 
-export const useVisualizer = () => {
-    const [state, setState] = useState<VisualizerState>(() => {
+export function useVisualizer() {
+    const [state, setState] = useState<VisualizerState>(initialState)
+
+    useEffect(() => {
         if (typeof window !== 'undefined') {
             const savedSettings = localStorage.getItem(STORAGE_KEY)
             if (savedSettings) {
-                const parsedSettings: SavedSettings = JSON.parse(savedSettings)
-                return { ...initialState, ...parsedSettings }
+                try {
+                    const settings: SavedSettings = JSON.parse(savedSettings)
+                    setState((prev) => ({ ...prev, ...settings }))
+                } catch (error) {
+                    console.error('Failed to load saved settings:', error)
+                }
             }
         }
-        return initialState
-    })
+    }, [])
 
-    const [manualFFmpegCommand, setManualFFmpegCommand] = useState<
-        string | null
-    >(null)
-    const [isManuallyEdited, setIsManuallyEdited] = useState(false)
-
-    useEffect(() => {
+    const saveSettings = useCallback(() => {
         if (typeof window !== 'undefined') {
             const settingsToSave: SavedSettings = {
                 muteAudio: state.muteAudio,
@@ -65,120 +67,233 @@ export const useVisualizer = () => {
             }
             localStorage.setItem(STORAGE_KEY, JSON.stringify(settingsToSave))
         }
-    }, [state])
+    }, [
+        state.muteAudio,
+        state.videoCodec,
+        state.audioCodec,
+        state.videoBitrate,
+        state.audioBitrate,
+        state.videoPreset,
+        state.videoProfile,
+        state.videoLevel,
+        state.videoFps,
+        state.pixelFormat,
+        state.audioChannels,
+        state.audioSampleRate,
+        state.restartAtTrimStart,
+        state.outputFileName,
+    ])
 
-    const clearSettings = useCallback(() => {
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem(STORAGE_KEY)
-        }
-        setState((prevState) => ({
-            ...initialState,
-            videoSrc: prevState.videoSrc,
-            fileName: prevState.fileName,
-            duration: prevState.duration,
-            currentTime: prevState.currentTime,
-            startTime: prevState.startTime,
-            endTime: prevState.endTime,
-            isPlaying: prevState.isPlaying,
-        }))
-        setManualFFmpegCommand(null)
-        setIsManuallyEdited(false)
-    }, [])
+    const generateFFmpegCommand = useCallback(
+        (currentState: VisualizerState): string => {
+            if (!currentState.fileName) return ''
 
-    const updateState = useCallback(
-        (newState: Partial<VisualizerState>) => {
-            setState((prevState) => ({ ...prevState, ...newState }))
-            // Only reset if not manually edited
-            if (!isManuallyEdited) {
-                setManualFFmpegCommand(null)
+            const parts: string[] = [
+                'ffmpeg',
+                '-i',
+                `"${currentState.fileName}"`,
+            ]
+
+            if (currentState.startTime > 0) {
+                parts.push('-ss', formatTime(currentState.startTime))
             }
+
+            if (
+                currentState.endTime > currentState.startTime &&
+                currentState.endTime < currentState.duration
+            ) {
+                const duration = currentState.endTime - currentState.startTime
+                parts.push('-t', formatTime(duration))
+            } else if (
+                currentState.startTime > 0 &&
+                currentState.endTime >= currentState.duration
+            ) {
+                const duration = currentState.duration - currentState.startTime
+                parts.push('-t', formatTime(duration))
+            }
+
+            if (currentState.videoCodec !== 'copy') {
+                parts.push('-c:v', currentState.videoCodec)
+            }
+
+            if (currentState.muteAudio) {
+                parts.push('-an')
+            } else if (currentState.audioCodec !== 'copy') {
+                parts.push('-c:a', currentState.audioCodec)
+            }
+
+            if (currentState.videoBitrate) {
+                parts.push('-b:v', currentState.videoBitrate)
+            }
+
+            if (currentState.audioBitrate && !currentState.muteAudio) {
+                parts.push('-b:a', currentState.audioBitrate)
+            }
+
+            if (
+                currentState.videoCodec.includes('x264') ||
+                currentState.videoCodec.includes('x265')
+            ) {
+                parts.push('-preset', currentState.videoPreset)
+
+                if (currentState.videoCodec === 'libx264') {
+                    parts.push('-profile:v', currentState.videoProfile)
+                    parts.push('-level', currentState.videoLevel)
+                }
+            }
+
+            if (currentState.videoFps) {
+                parts.push('-r', currentState.videoFps)
+            }
+
+            if (currentState.pixelFormat !== 'yuv420p') {
+                parts.push('-pix_fmt', currentState.pixelFormat)
+            }
+
+            if (currentState.audioChannels !== '2' && !currentState.muteAudio) {
+                parts.push('-ac', currentState.audioChannels)
+            }
+
+            if (
+                currentState.audioSampleRate !== '48000' &&
+                !currentState.muteAudio
+            ) {
+                parts.push('-ar', currentState.audioSampleRate)
+            }
+
+            const outputFile =
+                currentState.outputFileName ||
+                generateOutputFileName(currentState.fileName)
+            parts.push(`"${outputFile}"`)
+
+            return parts.join(' ')
         },
-        [isManuallyEdited],
+        [],
     )
 
-    const isTranscodingNeeded = useCallback((codec: string) => {
-        return codec !== 'copy' && codec !== 'default'
+    useEffect(() => {
+        const command = generateFFmpegCommand(state)
+        setState((prev) => ({ ...prev, ffmpegCommand: command }))
+    }, [
+        state.fileName,
+        state.startTime,
+        state.endTime,
+        state.muteAudio,
+        state.videoCodec,
+        state.audioCodec,
+        state.videoBitrate,
+        state.audioBitrate,
+        state.videoPreset,
+        state.videoProfile,
+        state.videoLevel,
+        state.videoFps,
+        state.pixelFormat,
+        state.audioChannels,
+        state.audioSampleRate,
+        state.outputFileName,
+    ])
+
+    useEffect(() => {
+        saveSettings()
+    }, [saveSettings])
+
+    const handleVideoUpload = useCallback((file: File) => {
+        const url = URL.createObjectURL(file)
+        const outputFileName = generateOutputFileName(file.name)
+
+        setState((prev) => ({
+            ...prev,
+            videoSrc: url,
+            videoFile: file,
+            fileName: file.name,
+            outputFileName,
+        }))
     }, [])
 
-    const getCodecCommand = useCallback((prefix: string, codec: string) => {
-        return codec !== 'default' ? `${prefix} ${codec}` : ''
+    const handleVideoLoad = useCallback((duration: number) => {
+        setState((prev) => ({
+            ...prev,
+            duration,
+            endTime: duration,
+        }))
     }, [])
 
-    const generateFFmpegCommand = useCallback(() => {
-        if (!state.videoSrc) return ''
+    const updateState = useCallback((updates: Partial<VisualizerState>) => {
+        setState((prev) => {
+            const newState = { ...prev, ...updates }
 
-        const parts = ['ffmpeg']
+            if (
+                'startTime' in updates ||
+                'endTime' in updates ||
+                'duration' in updates
+            ) {
+                const duration = newState.duration
+                let startTime = newState.startTime
+                let endTime = newState.endTime
 
-        // Input file
-        parts.push(`-i "${state.fileName}"`)
+                if (!isFinite(startTime) || isNaN(startTime) || startTime < 0) {
+                    startTime = 0
+                }
+                if (!isFinite(endTime) || isNaN(endTime) || endTime < 0) {
+                    endTime = duration || 0
+                }
+                if (!isFinite(duration) || isNaN(duration) || duration < 0) {
+                    console.warn('Invalid duration provided:', duration)
+                } else {
+                    startTime = Math.max(0, Math.min(startTime, duration))
+                    endTime = Math.max(startTime, Math.min(endTime, duration))
 
-        // Trimming
-        if (state.startTime > 0)
-            parts.push(`-ss ${formatTimeFlexible(state.startTime)}`)
-        if (state.endTime < state.duration)
-            parts.push(`-to ${formatTimeFlexible(state.endTime)}`)
-
-        // Audio settings
-        if (state.muteAudio) {
-            parts.push('-an')
-        } else {
-            const audioCodecCommand = getCodecCommand('-c:a', state.audioCodec)
-            if (audioCodecCommand) parts.push(audioCodecCommand)
-
-            if (isTranscodingNeeded(state.audioCodec)) {
-                parts.push(
-                    `-b:a ${state.audioBitrate}`,
-                    `-ac ${state.audioChannels}`,
-                    `-ar ${state.audioSampleRate}`,
-                )
+                    newState.startTime = startTime
+                    newState.endTime = endTime
+                }
             }
-        }
 
-        // Video settings
-        const videoCodecCommand = getCodecCommand('-c:v', state.videoCodec)
-        if (videoCodecCommand) parts.push(videoCodecCommand)
-
-        if (isTranscodingNeeded(state.videoCodec)) {
-            parts.push(
-                `-b:v ${state.videoBitrate}`,
-                `-preset ${state.videoPreset}`,
-                `-profile:v ${state.videoProfile}`,
-                `-level ${state.videoLevel}`,
-                `-pix_fmt ${state.pixelFormat}`,
-            )
-            if (state.videoFps) parts.push(`-r ${state.videoFps}`)
-        }
-
-        // Output file
-        parts.push(`"${state.outputFileName}"`)
-
-        return parts.join(' ')
-    }, [state, isTranscodingNeeded, getCodecCommand])
-
-    const ffmpegCommand = useMemo(() => {
-        if (isManuallyEdited && manualFFmpegCommand !== null) {
-            return manualFFmpegCommand
-        }
-        return generateFFmpegCommand()
-    }, [isManuallyEdited, manualFFmpegCommand, generateFFmpegCommand])
-
-    const updateFFmpegCommand = useCallback((newCommand: string) => {
-        setManualFFmpegCommand(newCommand)
-        setIsManuallyEdited(true)
+            return newState
+        })
     }, [])
 
-    const resetFFmpegCommand = useCallback(() => {
-        setManualFFmpegCommand(null)
-        setIsManuallyEdited(false)
-    }, [])
+    const resetVideo = useCallback(() => {
+        if (state.videoSrc) {
+            URL.revokeObjectURL(state.videoSrc)
+        }
+        setState((prev) => ({
+            ...initialState,
+            muteAudio: prev.muteAudio,
+            videoCodec: prev.videoCodec,
+            audioCodec: prev.audioCodec,
+            videoBitrate: prev.videoBitrate,
+            audioBitrate: prev.audioBitrate,
+            videoPreset: prev.videoPreset,
+            videoProfile: prev.videoProfile,
+            videoLevel: prev.videoLevel,
+            videoFps: prev.videoFps,
+            pixelFormat: prev.pixelFormat,
+            audioChannels: prev.audioChannels,
+            audioSampleRate: prev.audioSampleRate,
+            restartAtTrimStart: prev.restartAtTrimStart,
+            outputFileName: prev.outputFileName,
+        }))
+    }, [state.videoSrc])
 
     return {
-        state,
+        ...state,
+        handleVideoUpload,
+        handleVideoLoad,
         updateState,
-        ffmpegCommand,
-        clearSettings,
-        updateFFmpegCommand,
-        resetFFmpegCommand,
-        isManuallyEdited,
+        resetVideo,
     }
+}
+
+function formatTime(seconds: number): string {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const secs = Math.floor(seconds % 60)
+    const ms = Math.floor((seconds % 1) * 1000)
+
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`
+}
+
+function generateOutputFileName(inputFileName: string): string {
+    const nameWithoutExt = inputFileName.replace(/\.[^/.]+$/, '')
+    return `${nameWithoutExt}_processed.mp4`
 }

@@ -19,37 +19,3 @@ export function formatTimeFlexible(timeInSeconds: number): string {
         return `${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`
     }
 }
-
-export function parseTimeFlexible(timeString: string): number {
-    const patterns = [
-        /^(\d{2}):(\d{2}):(\d{2})\.(\d{1,3})$/, // HH:MM:SS.mmm
-        /^(\d{2}):(\d{2})\.(\d{1,3})$/, // MM:SS.mmm
-        /^(\d{1,2})\.(\d{1,3})$/, // SS.mmm
-        /^(\d{1,2}):(\d{2})$/, // MM:SS
-        /^(\d{1,2})$/, // SS
-    ]
-
-    for (const pattern of patterns) {
-        const match = timeString.match(pattern)
-        if (match) {
-            const parts = match.slice(1).map(Number)
-            if (parts.length === 4) {
-                return (
-                    parts[0] * 3600 + parts[1] * 60 + parts[2] + parts[3] / 1000
-                )
-            } else if (parts.length === 3) {
-                return parts[0] * 60 + parts[1] + parts[2] / 1000
-            } else if (parts.length === 2) {
-                if (pattern.source.includes('\\.')) {
-                    return parts[0] + parts[1] / 1000
-                } else {
-                    return parts[0] * 60 + parts[1]
-                }
-            } else if (parts.length === 1) {
-                return parts[0]
-            }
-        }
-    }
-
-    return NaN
-}

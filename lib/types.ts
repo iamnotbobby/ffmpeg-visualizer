@@ -1,5 +1,6 @@
 export interface VisualizerState {
     videoSrc: string | null
+    videoFile: File | null
     fileName: string
     duration: number
     currentTime: number
