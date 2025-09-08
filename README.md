@@ -10,4 +10,4 @@ Next.js tool that lets users upload local videos and edit them with FFmpeg optio
 
 Feel free to open a PR/an issue for a feature/additional options.
 
-MIT License: https://raw.githubusercontent.com/returnkirbo/ffmpeg-visualizer/master/LICENSE
+MIT License: https://raw.githubusercontent.com/iamnotbobby/ffmpeg-visualizer/master/LICENSE
