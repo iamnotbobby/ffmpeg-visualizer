@@ -123,7 +123,7 @@ export function CommandOutput({
                             <p className="text-amber-700 text-sm mt-1">
                                 You have manually edited the FFmpeg command.
                                 Changes to settings will not update this command
-                                automatically. Use the "Reset" button to return
+                                automatically. Use the &quot;Reset&quot; button to return
                                 to the auto-generated command.
                             </p>
                         </div>
